@@ -1,9 +1,0 @@
-{
-    "files.associations": {
-        "iosfwd": "cpp",
-        "exception": "cpp",
-        "ostream": "cpp",
-        "iostream": "cpp",
-        "filesystem": "cpp"
-    }
-}

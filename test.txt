@@ -1,0 +1,20 @@
+b2 b4
+g7 g5
+c1 b2
+f8 g7
+b1 a3
+g8 f6
+d2 d4
+O-O
+d1 d2
+a7 a6
+O-O-O
+g5 g4
+f2 f3
+g4 g3
+f3 f4
+g3 h2
+f4 f5
+h2 g1
+n
+quit

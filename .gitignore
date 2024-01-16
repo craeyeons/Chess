@@ -1,0 +1,10 @@
+.vscode/
+autom4te.cache/
+CMakeFiles/
+/cmake_install.cmake
+/CMakeCache.txt
+/main
+/chess
+/chess_board
+/chess_pieces
+/Makefile

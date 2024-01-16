@@ -8,7 +8,7 @@ using namespace std;
 
 const int BOARD_WIDTH = 480;
 const int BOARD_HEIGHT = 480;
-const int SCREEN_HEIGHT = 640;
+const int SCREEN_HEIGHT = 480;
 const int SQUARE_SIZE = BOARD_WIDTH / 8;
 
 pair<int, int> convertToPixelPosition(int row, int col);
@@ -23,7 +23,7 @@ int main() {
     SDL_Init(SDL_INIT_VIDEO);
     
     SDL_Window* window = SDL_CreateWindow("Chess",
-        SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, BOARD_WIDTH, 600, 0);
+        SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, BOARD_WIDTH, SCREEN_HEIGHT, 0);
     SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, 0);
     SDL_Surface* chessboard = IMG_Load("piece_images/board.png");
     SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, chessboard);

@@ -189,7 +189,7 @@ class Board {
             }
 
             // Check if the last move was moving two squares
-            if (lastMove.second[1] - lastMove.first[1] != 2) {
+            if (abs(lastMove.second[1] - lastMove.first[1]) != 2) {
                 return false;
             }
 
@@ -210,7 +210,11 @@ class Board {
             pair<int, int> targetPosition = convertPoisition(target);
 
             // Remove the opposing pawn
-            removePiece(targetPosition.first - 1, targetPosition.second);
+            if (piece->getColor() == 0) {
+                removePiece(targetPosition.first - 1, targetPosition.second);
+            } else {
+                removePiece(targetPosition.first + 1, targetPosition.second);
+            }
             // Remove the current pawn
             removePiece(source.first, source.second);
             // Move the current pawn to the target position

@@ -145,6 +145,11 @@ class Board {
                 throw InvalidCaptureException(source, target);
             }
 
+            // Check if the move will put the player's king in check
+            if (!checkSelfKingSafety(source, target, turn)) {
+                throw KingInCheckException();
+            }
+
             // Current Piece is removed from the board
             removePiece(sourcePosition.first, sourcePosition.second);
             // If there is a piece on the target position, it is removed
@@ -173,6 +178,39 @@ class Board {
         }
 
     private:
+        bool checkSelfKingSafety(string source, string target, int turn) {
+            pair<int, int> sourcePosition = convertPoisition(source);
+            pair<int, int> targetPosition = convertPoisition(target);
+
+            ChessPiece* movingPiece = board[sourcePosition.first][sourcePosition.second];
+            ChessPiece* targetPiece = board[targetPosition.first][targetPosition.second];
+
+            // Current Piece is removed from the board
+            removePiece(sourcePosition.first, sourcePosition.second);
+            // If there is a piece on the target position, it is removed
+            removePiece(targetPosition.first, targetPosition.second);
+
+            // This new piece only serves to block movement, its choice is not important
+            ChessPiece* newPiece = new Pawn(turn, target);
+            addPiece(newPiece, targetPosition.first, targetPosition.second);
+
+            // Check if the king is in check
+            pair<int, int> kingCoordinates = getKingCoordinates(turn);
+            if (isAttacked(convertPosition(kingCoordinates), turn)) {
+                // Undo the move
+                removePiece(targetPosition.first, targetPosition.second);
+                addPiece(movingPiece, sourcePosition.first, sourcePosition.second);
+                addPiece(targetPiece, targetPosition.first, targetPosition.second);
+                return false;
+            }
+
+            // Undo the move
+            removePiece(targetPosition.first, targetPosition.second);
+            addPiece(movingPiece, sourcePosition.first, sourcePosition.second);
+            addPiece(targetPiece, targetPosition.first, targetPosition.second);
+            return true;
+        }
+
         bool isEnPassant(ChessPiece* piece, string target, int turn) {
             // Check if the moving piece is a pawn
             if (piece->getSymbol() != "♙" && piece->getSymbol() != "♟") {

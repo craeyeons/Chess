@@ -9,3 +9,10 @@ pair<int, int> convertPoisition(string position) {
 
     return make_pair(row, col);
 }
+
+string convertPosition(pair<int, int> position) {
+    string col = string(1, position.second + 'a');
+    string row = string(1, position.first + '1');
+
+    return col + row;
+}

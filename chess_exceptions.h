@@ -18,6 +18,19 @@ class InvalidSquareException : public ChessException {
         }
 };
 
+class KingInCheckException : public ChessException {
+    public:
+        string errorMessage;
+
+        KingInCheckException() {
+            errorMessage = "The king is in check.";
+        }
+
+        const char* what() const throw() {
+            return errorMessage.c_str();
+        }
+};
+
 class NoPieceException : public ChessException {
     public:
         string source;

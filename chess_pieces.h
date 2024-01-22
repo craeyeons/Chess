@@ -253,26 +253,90 @@ class Pawn : public ChessPiece {
             
             // Pawn promotion
             if (color == 0 && newPosition[1] == '8' || color == 1 && newPosition[1] == '1') {
-                cout << "Promote pawn to: ";
-                cout << "Rook (r), Knight (n), Bishop (b), or Queen (q): ";
-                string choice;
-                cin >> choice;
-                while (choice != "r" && choice != "n" && choice != "b" && choice != "q") {
-                    cout << "Invalid choice. Please try again: ";
-                    cin >> choice;
-                }
-
-                if (choice == "r") {
-                    return new Rook(color, newPosition);
-                } else if (choice == "n") {
-                    return new Knight(color, newPosition);
-                } else if (choice == "b") {
-                    return new Bishop(color, newPosition);
-                } else if (choice == "q") {
-                    return new Queen(color, newPosition);
-                }
+                return pieceSelection(color, newPosition);
             }
 
             return this;
+        }
+
+    private:
+    
+        // Creates a SDL window to select the piece to promote to
+        ChessPiece* pieceSelection(int color, string newPosition) {
+            SDL_Window* window = SDL_CreateWindow("Pawn Promotion",
+                SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 400, 100, 0);
+            SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, 0);
+
+            // Background color of the window to green (same shade as chess board)
+            SDL_SetRenderDrawColor(renderer, 0, 162, 73, 72);
+
+
+            vector<SDL_Surface*> choices(4);
+
+            if (color == 0) {
+                choices[0] = IMG_Load("piece_images/wq.png");
+                choices[1] = IMG_Load("piece_images/wr.png");
+                choices[2] = IMG_Load("piece_images/wb.png");
+                choices[3] = IMG_Load("piece_images/wn.png");
+            } else {
+                choices[0] = IMG_Load("piece_images/bq.png");
+                choices[1] = IMG_Load("piece_images/br.png");
+                choices[2] = IMG_Load("piece_images/bb.png");
+                choices[3] = IMG_Load("piece_images/bn.png");
+            }
+
+            vector<SDL_Texture*> textures(4);
+            for (int i = 0; i < 4; i++) {
+                textures[i] = SDL_CreateTextureFromSurface(renderer, choices[i]);
+            }
+
+            SDL_Rect positions[4];
+            for (int i = 0; i < 4; i++) {
+                positions[i].x = i * 100;
+                positions[i].y = 0;
+                positions[i].w = 100;
+                positions[i].h = 100;
+            }
+
+            SDL_RenderClear(renderer);
+
+            for (int i = 0; i < 4; i++) {
+                SDL_RenderCopy(renderer, textures[i], NULL, &positions[i]);
+            }
+
+            SDL_RenderPresent(renderer);
+
+            bool quit = false;
+            ChessPiece* promotionPiece;
+
+            while (!quit) {
+                SDL_Event event;
+                SDL_WaitEvent(&event);
+
+                switch (event.type) {
+                    case SDL_QUIT:
+                        quit = true;
+                        break;
+                    case SDL_MOUSEBUTTONDOWN:
+                        int x, y;
+                        SDL_GetMouseState(&x, &y);
+                        if (x <= 100) {
+                            promotionPiece = new Queen(color, newPosition);
+                        } else if (x <= 200) {
+                            promotionPiece = new Rook(color, newPosition);
+                        } else if (x <= 300) {
+                            promotionPiece = new Bishop(color, newPosition);
+                        } else if (x <= 400) {
+                            promotionPiece = new Knight(color, newPosition);
+                        }
+                        quit = true;
+                        break;
+                }
+            }
+
+            SDL_DestroyWindow(window);
+            SDL_DestroyRenderer(renderer);
+
+            return promotionPiece;
         }
 };

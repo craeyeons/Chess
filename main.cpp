@@ -32,7 +32,7 @@ int main() {
 
     // Two clicks to make a move
     string source, target;
-    int clicks = 0;
+    int clicks = 0, isCheckmate = 0, isStalemate = 0;
     vector<vector<ChessPiece*>> boardstate = board.getBoard();
  
     while (!quit) {
@@ -89,7 +89,11 @@ int main() {
             target = boardCoords;
             try {
                 board.move(source, target, turn);
+                cout << "end of " << (turn == 0 ? "white" : "black") << "'s turn" << endl;
                 turn = (turn + 1) % 2;
+                isCheckmate = board.isCheckmate(turn);
+                isStalemate = board.isStalemate(turn);
+                quit = isCheckmate || isStalemate;
                 board.printBoard();
             } catch (ChessException& e){
                 cout << e.what() << endl;
@@ -122,6 +126,49 @@ int main() {
             SDL_Rect rect = {pixelCoords.second, pixelCoords.first, SQUARE_SIZE, SQUARE_SIZE};
             SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
             SDL_RenderDrawRect(renderer, &rect);
+
+            // highlight all possible moves
+            vector<string> possibleMoves = board.generateValidMoves(source, turn);
+            for (string move : possibleMoves) {
+                pair<int, int> pixelCoords = convertToPixelPosition(move[1] - '1', move[0] - 'a');
+                SDL_Surface* dotSurface = IMG_Load("piece_images/dot.png");
+                SDL_Texture* dotTexture = SDL_CreateTextureFromSurface(renderer, dotSurface);
+                SDL_Rect dotRect = {pixelCoords.second, pixelCoords.first, SQUARE_SIZE, SQUARE_SIZE};
+                SDL_RenderCopy(renderer, dotTexture, NULL, &dotRect);
+            }
+
+            if (source == "e1" || source == "e8") {
+                if (board.isValidKingCastle(turn)) {
+                    pair<int, int> pixelCoords = turn == 0 
+                                               ? convertToPixelPosition(0, 6)
+                                               : convertToPixelPosition(7, 6);
+                    SDL_Surface* dotSurface = IMG_Load("piece_images/dot.png");
+                    SDL_Texture* dotTexture = SDL_CreateTextureFromSurface(renderer, dotSurface);
+                    SDL_Rect dotRect = {pixelCoords.second, pixelCoords.first, SQUARE_SIZE, SQUARE_SIZE};
+                    SDL_RenderCopy(renderer, dotTexture, NULL, &dotRect);
+                }
+
+                if (board.isValidQueenCastle(turn)) {
+                    pair<int, int> pixelCoords = turn == 0
+                                               ? convertToPixelPosition(0, 2)
+                                               : convertToPixelPosition(7, 2);
+                    SDL_Surface* dotSurface = IMG_Load("piece_images/dot.png");
+                    SDL_Texture* dotTexture = SDL_CreateTextureFromSurface(renderer, dotSurface);
+                    SDL_Rect dotRect = {pixelCoords.second, pixelCoords.first, SQUARE_SIZE, SQUARE_SIZE};
+                    SDL_RenderCopy(renderer, dotTexture, NULL, &dotRect);
+                }
+            }
+
+        }
+
+        if (isCheckmate) {
+            string winner = turn == 0 ? "White" : "Black";
+            const string message = "Checkmate! " + winner + " wins!";
+            SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION, "Game Over", message.c_str(), window);
+        }
+
+        if (isStalemate) {
+            SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION, "Game Over", "Stalemate!", window);
         }
 
         SDL_RenderPresent(renderer);

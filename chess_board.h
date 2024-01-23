@@ -169,12 +169,205 @@ class Board {
         }
 
         bool isCheckmate(int turn) {
+            if (generateAllValidMoves(turn).size() == 0 && isAttacked(convertPosition(getKingCoordinates(turn)), turn)) {
+                return true;
+            }
+
             return false;
         }
 
         bool isStalemate(int turn) {
-            getKingCoordinates(turn);
+            if (generateAllValidMoves(turn).size() == 0 && !isAttacked(convertPosition(getKingCoordinates(turn)), turn)) {
+                return true;
+            }
+
             return false;
+        }
+
+        vector<pair<string, string>> generateAllValidMoves(int turn) {
+            vector<pair<string, string>> validMoves;
+            vector<vector<ChessPiece*> > boardstate = getBoard();
+
+            // Iterate through the board
+            for (int i = 0; i < 8; i++) {
+                for (int j = 0; j < 8; j++) {
+                    if (boardstate[i][j] == nullptr) {
+                        continue;
+                    }
+
+                    if (boardstate[i][j]->getColor() != turn) {
+                        continue;
+                    }
+
+                    string source = convertPosition(make_pair(i, j));
+                    vector<string> pieceValidMoves = generateValidMoves(source, turn);
+
+                    for (string target : pieceValidMoves) {
+                        validMoves.push_back(make_pair(source, target));
+                    }
+                }
+            }
+
+            return validMoves;
+        }
+
+        vector<string> generateValidMoves(string source, int turn) {
+            vector<string> validMoves;
+            pair<int, int> sourcePosition = convertPoisition(source);
+
+            ChessPiece* movingPiece = board[sourcePosition.first][sourcePosition.second];
+
+            // Iterate through the board
+            for (int i = 0; i < 8; i++) {
+                for (int j = 0; j < 8; j++) {
+                    string target = convertPosition(make_pair(i, j));
+                    if (target == source) {
+                        continue;
+                    }
+
+                    if (checkMove(source, target, turn)) {
+                        validMoves.push_back(target);
+                    }
+                }
+            }
+
+            return validMoves;
+        }
+
+        bool isValidKingCastle(int turn) {
+            if (turn == 0) {
+                if (board[0][4] == nullptr || board[0][7] == nullptr) {
+                    return false;
+                }
+
+                if (board[0][4]->getSymbol() != "♔" && board[0][7]->getSymbol() != "♖") {
+                    return false;
+                }
+
+                if (board[0][4]->getHasMoved() != false && board[0][7]->getHasMoved() != false) {
+                    return false;
+                }
+
+                if (board[0][5] != nullptr || board[0][6] != nullptr) {
+                    return false;
+                }
+
+                if (isAttacked("e1", turn)) {
+                    return false;
+                }
+
+                if (isAttacked("f1", turn)) {
+                    return false;
+                }
+
+                if (isAttacked("g1", turn)) {
+                    return false;
+                }
+            }
+
+            if (turn == 1) {
+                if (board[7][4] == nullptr || board[7][7] == nullptr) {
+                    return false;
+                }
+
+                if (board[7][4]->getSymbol() != "♚" && board[7][7]->getSymbol() != "♜") {
+                    return false;
+                }
+
+                if (board[7][4]->getHasMoved() != false && board[7][7]->getHasMoved() != false) {
+                    return false;
+                }
+
+                if (board[7][5] != nullptr || board[7][6] != nullptr) {
+                    return false;
+                }
+
+                if (isAttacked("e8", turn)) {
+                    return false;
+                }
+
+                if (isAttacked("f8", turn)) {
+                    return false;
+                }
+
+                if (isAttacked("g8", turn)) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        bool isValidQueenCastle(int turn) {
+            if (turn == 0) {
+                if (board[0][4] == nullptr || board[0][0] == nullptr) {
+                    return false;
+                }
+
+                if (board[0][4]->getSymbol() != "♔" && board[0][0]->getSymbol() != "♖") {
+                    return false;
+                }
+
+                if (board[0][4]->getHasMoved() != false && board[0][0]->getHasMoved() != false) {
+                    return false;
+                }
+
+                if (board[0][1] != nullptr || board[0][2] != nullptr || board[0][3] != nullptr) {
+                    return false;
+                }
+
+                if (isAttacked("e1", turn)) {
+                    return false;
+                }
+
+                if (isAttacked("d1", turn)) {
+                    return false;
+                }
+
+                if (isAttacked("c1", turn)) {
+                    return false;
+                }
+
+                if (isAttacked("b1", turn)) {
+                    return false;
+                }
+            }
+
+            if (turn == 1) {
+                if (board[7][4] == nullptr || board[7][0] == nullptr) {
+                    return false;
+                }
+
+                if (board[7][4]->getSymbol() != "♚" && board[7][0]->getSymbol() != "♜") {
+                    return false;
+                }
+
+                if (board[7][4]->getHasMoved() != false && board[7][0]->getHasMoved() != false) {
+                    return false;
+                }
+
+                if (board[7][1] != nullptr || board[7][2] != nullptr || board[7][3] != nullptr) {
+                    return false;
+                }
+
+                if (isAttacked("e8", turn)) {
+                    return false;
+                }
+
+                if (isAttacked("d8", turn)) {
+                    return false;
+                }
+
+                if (isAttacked("c8", turn)) {
+                    return false;
+                }
+
+                if (isAttacked("b8", turn)) {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
     private:
@@ -191,11 +384,18 @@ class Board {
             removePiece(targetPosition.first, targetPosition.second);
 
             // This new piece only serves to block movement, its choice is not important
-            ChessPiece* newPiece = new Pawn(turn, target);
+            // UNLESS it is the king
+            ChessPiece* newPiece;
+            if (movingPiece->getSymbol() == "♔" || movingPiece->getSymbol() == "♚") {
+                newPiece = new King(turn, target);
+            } else {
+                newPiece = new Pawn(turn, target);
+            }
             addPiece(newPiece, targetPosition.first, targetPosition.second);
 
             // Check if the king is in check
             pair<int, int> kingCoordinates = getKingCoordinates(turn);
+            
             if (isAttacked(convertPosition(kingCoordinates), turn)) {
                 // Undo the move
                 removePiece(targetPosition.first, targetPosition.second);
@@ -348,7 +548,6 @@ class Board {
             int col = source.second + colIncrement;
 
             while (row != target.first || col != target.second) {
-                    cout << row << " " << col << endl;
                     if (board[row][col] != nullptr) {
                         return true;
                     }
@@ -386,7 +585,7 @@ class Board {
 
         pair<int, int> getKingCoordinates(int color) {
             for (int i = 0; i < 8; i++) {
-                for (int j = 0; i < 8; j++) {
+                for (int j = 0; j < 8; j++) {
                     if (board[i][j] == nullptr) {
                         continue;
                     }
@@ -428,6 +627,10 @@ class Board {
             }
 
             if (!isValidCapture(movingPiece, targetPiece)) {
+                return false;
+            }
+
+            if (!checkSelfKingSafety(source, target, turn)) {
                 return false;
             }
 
@@ -480,70 +683,6 @@ class Board {
             return false;
         }
 
-        bool isValidKingCastle(int turn) {
-            if (turn == 0) {
-                if (board[0][4] == nullptr || board[0][7] == nullptr) {
-                    return false;
-                }
-
-                if (board[0][4]->getSymbol() != "♔" && board[0][7]->getSymbol() != "♖") {
-                    return false;
-                }
-
-                if (board[0][4]->getHasMoved() != false && board[0][7]->getHasMoved() != false) {
-                    return false;
-                }
-
-                if (board[0][5] != nullptr || board[0][6] != nullptr) {
-                    return false;
-                }
-
-                if (isAttacked("e1", turn)) {
-                    return false;
-                }
-
-                if (isAttacked("f1", turn)) {
-                    return false;
-                }
-
-                if (isAttacked("g1", turn)) {
-                    return false;
-                }
-            }
-
-            if (turn == 1) {
-                if (board[7][4] == nullptr || board[7][7] == nullptr) {
-                    return false;
-                }
-
-                if (board[7][4]->getSymbol() != "♚" && board[7][7]->getSymbol() != "♜") {
-                    return false;
-                }
-
-                if (board[7][4]->getHasMoved() != false && board[7][7]->getHasMoved() != false) {
-                    return false;
-                }
-
-                if (board[7][5] != nullptr || board[7][6] != nullptr) {
-                    return false;
-                }
-
-                if (isAttacked("e8", turn)) {
-                    return false;
-                }
-
-                if (isAttacked("f8", turn)) {
-                    return false;
-                }
-
-                if (isAttacked("g8", turn)) {
-                    return false;
-                }
-            }
-
-            return true;
-        }
-
         void kingCastle(int turn) {
             ChessPiece* king;
             ChessPiece* rook;
@@ -575,78 +714,6 @@ class Board {
                 addPiece(king, 7, 6);
                 addPiece(rook, 7, 5);
             }
-        }
-
-        bool isValidQueenCastle(int turn) {
-            if (turn == 0) {
-                if (board[0][4] == nullptr || board[0][0] == nullptr) {
-                    return false;
-                }
-
-                if (board[0][4]->getSymbol() != "♔" && board[0][0]->getSymbol() != "♖") {
-                    return false;
-                }
-
-                if (board[0][4]->getHasMoved() != false && board[0][0]->getHasMoved() != false) {
-                    return false;
-                }
-
-                if (board[0][1] != nullptr || board[0][2] != nullptr || board[0][3] != nullptr) {
-                    return false;
-                }
-
-                if (isAttacked("e1", turn)) {
-                    return false;
-                }
-
-                if (isAttacked("d1", turn)) {
-                    return false;
-                }
-
-                if (isAttacked("c1", turn)) {
-                    return false;
-                }
-
-                if (isAttacked("b1", turn)) {
-                    return false;
-                }
-            }
-
-            if (turn == 1) {
-                if (board[7][4] == nullptr || board[7][0] == nullptr) {
-                    return false;
-                }
-
-                if (board[7][4]->getSymbol() != "♚" && board[7][0]->getSymbol() != "♜") {
-                    return false;
-                }
-
-                if (board[7][4]->getHasMoved() != false && board[7][0]->getHasMoved() != false) {
-                    return false;
-                }
-
-                if (board[7][1] != nullptr || board[7][2] != nullptr || board[7][3] != nullptr) {
-                    return false;
-                }
-
-                if (isAttacked("e8", turn)) {
-                    return false;
-                }
-
-                if (isAttacked("d8", turn)) {
-                    return false;
-                }
-
-                if (isAttacked("c8", turn)) {
-                    return false;
-                }
-
-                if (isAttacked("b8", turn)) {
-                    return false;
-                }
-            }
-
-            return true;
         }
 
         void queenCastle(int turn) {
